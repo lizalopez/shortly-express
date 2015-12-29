@@ -25,12 +25,14 @@ app.use(express.static(__dirname + '/public'));
 
 app.get('/', 
 function(req, res) {
-  res.render('index');
+  // res.render('index');
+  res.redirect('login');
 });
 
 app.get('/create', 
 function(req, res) {
-  res.render('index');
+  // res.render('index'); 
+  res.redirect('login');
 });
 
 app.get('/links', 
@@ -38,7 +40,27 @@ function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
+  
 });
+
+app.get('/signup', 
+function(req, res) {
+  console.log('GETTING on signup, body:', res.body);
+  res.render('signup');
+});
+
+app.post('/signup', 
+function(req, res) {
+  // console.log('POSTING on signup, body:', req.body);
+  // var user = new User({username: req.body.username, password: req.body.password});
+  // console.log("user",user)
+  // res.send(200);
+});
+
+app.get('/login',
+  function (req, res){
+    res.render('login');
+  });
 
 app.post('/links', 
 function(req, res) {
@@ -52,6 +74,8 @@ function(req, res) {
   new Link({ url: uri }).fetch().then(function(found) {
     if (found) {
       res.send(200, found.attributes);
+    res.redirect('login');
+
     } else {
       util.getUrlTitle(uri, function(err, title) {
         if (err) {
