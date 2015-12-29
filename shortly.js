@@ -2,6 +2,8 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
+var session = require('express-session');
+var cookieParser = require('cookie-parser');
 
 
 var db = require('./app/config');
@@ -21,13 +23,25 @@ app.use(partials());
 app.use(bodyParser.json());
 // Parse forms (signup/login)
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(session({secret: 'mysecret', 
+                 saveUninitialized: true,
+                 resave: true}));
 app.use(express.static(__dirname + '/public'));
 
+function restrict(req, res, next) {
+  if (req.session.user) {
+    next();
+  } else {
+    req.session.error = 'Access denied!';
+    res.redirect('/login');
+  }
+};
 
-app.get('/', 
+app.get('/', restrict,
 function(req, res) {
   // res.render('index');
-  res.redirect('login');
+  res.render('index');
 });
 
 app.get('/create', 
@@ -53,7 +67,7 @@ function(req, res) {
 app.post('/signup', 
 function(req, res) {
   var text = req.query.text;
-  var user = new User({username: req.body.username, password: req.body.password}).save().then(function() {console.log("added");});
+  var user = new User({username: req.body.username, password: req.body.password}).save().then(function() {console.log("singup: added");});
   //db.run("insert into USERS(id, username, password) values(?, 'user', 'pw')");
   // console.log('POSTING on signup, body:', req.body);
   console.log("user",user);
@@ -67,6 +81,50 @@ app.get('/login',
     res.render('login');
   });
 
+app.post('/login',
+  function(req, res){
+    var username = req.body.username;
+    var password = req.body.password;
+    console.log('user model:', User);
+    Users.reset().fetch().then(function(found) {
+      found.models.forEach(function(model){
+        console.log('each attr:', model.attributes);
+        if (model.attributes.username === username) {
+          //check pw
+          console.log('matching user!');
+          if (model.attributes.password === password) {
+            console.log('matching pw!!');
+            req.session.regenerate(function(){
+              req.session.user = username;
+              res.redirect('/');
+              });
+          } else {
+            //incorrect pw
+          }
+        } else {
+          //user doesn't exist, render login w message?
+        }
+      });
+      console.log('found in db:', found.models.attributes);
+    });
+
+    // if (username === 'demo' && password === 'demo') {
+    //   console.log('demo entered', username, password);
+    //   req.session.regenerate(function(){
+    //     req.session.user = username;
+    //     res.redirect('/');
+    //     });
+    // } else {
+    //   res.redirect('/links');
+    // }
+});
+app.get('/logout', function(request, response){
+  console.log("got here")
+    request.session.destroy(function(){
+      console.log("session ended")
+        response.redirect('/login');
+    });
+});
 app.post('/links', 
 function(req, res) {
   var uri = req.body.url;
