@@ -1,5 +1,6 @@
 var Bookshelf = require('bookshelf');
 var path = require('path');
+var sqlite3 = require('sqlite3').verbose();
 
 var db = Bookshelf.initialize({
   client: 'sqlite3',
@@ -44,6 +45,17 @@ db.knex.schema.hasTable('clicks').then(function(exists) {
 /************************************************************/
 // Add additional schema definitions below
 /************************************************************/
+db.knex.schema.hasTable('users').then(function(exists) {
+  if (!exists) {
+  db.knex.schema.createTable('users', function (table){
+    table.increments('id').primary();
+    table.string('username');
+    table.string('password');
+  }).then(function(table) {
+    console.log('Created user table:', table);
+  });
+}
+});
 
 
 module.exports = db;

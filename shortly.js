@@ -5,6 +5,7 @@ var bodyParser = require('body-parser');
 
 
 var db = require('./app/config');
+
 var Users = require('./app/collections/users');
 var User = require('./app/models/user');
 var Links = require('./app/collections/links');
@@ -51,10 +52,14 @@ function(req, res) {
 
 app.post('/signup', 
 function(req, res) {
+  var text = req.query.text;
+  var user = new User({username: req.body.username, password: req.body.password}).save().then(function() {console.log("added");});
+  //db.run("insert into USERS(id, username, password) values(?, 'user', 'pw')");
   // console.log('POSTING on signup, body:', req.body);
-  // var user = new User({username: req.body.username, password: req.body.password});
-  // console.log("user",user)
-  // res.send(200);
+  console.log("user",user);
+  res.send(200);
+  // res.location('/');
+  res.redirect('/');
 });
 
 app.get('/login',
